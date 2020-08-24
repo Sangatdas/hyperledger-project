@@ -35,7 +35,7 @@ public final class OpenCardContract implements ContractInterface {
 
     private final Genson genson = new Genson();
 
-    @Transaction()
+    @Transaction(intent = Transaction.TYPE.SUBMIT)
     public OpenCard createOpenCard(final Context ctx, final String cardNumber,
                                    final int cardCVV, final String validFrom,
                                    final String validTo, final String cardOwner) {
@@ -52,27 +52,35 @@ public final class OpenCardContract implements ContractInterface {
             Date validF = new SimpleDateFormat("dd-MM-yyyy").parse(validFrom);
             Date validT = new SimpleDateFormat("dd-MM-yyyy").parse(validTo);
             OpenCard card = new OpenCard(cardNumber, cardCVV, validF, validT, cardOwner, null, null);
-
+            cardState = genson.serialize(card);
+            stub.putStringState(cardNumber, cardState);
             return card;
         } catch (ParseException pe) {
             String errorMessage = String.format("Invalid date.");
             System.out.println(errorMessage);
             throw new ChaincodeException(errorMessage);
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            throw new ChaincodeException((e.getMessage()));
         }
     }
 
+    @Transaction(intent = Transaction.TYPE.EVALUATE)
     public OpenCard getOpenCard(final Context ctx, final String cardNumber) {
-        ChaincodeStub stub = ctx.getStub();
-        String carState = stub.getStringState(cardNumber);
+        try {
+            ChaincodeStub stub = ctx.getStub();
+            String cardState = stub.getStringState(cardNumber);
 
-        if (carState.isEmpty()) {
-            String errorMessage = String.format("Card %s does not exist", cardNumber);
-            System.out.println(errorMessage);
-            throw new ChaincodeException(errorMessage);
+            if (cardState.isEmpty()) {
+                String errorMessage = String.format("Card %s does not exist", cardNumber);
+                System.out.println(errorMessage);
+                throw new ChaincodeException(errorMessage);
+            }
+            OpenCard card = genson.deserialize(cardState, OpenCard.class);
+            return card;
+        } catch (Exception e) {
+            System.out.println(e.getMessage());
+            return null;
         }
-
-        OpenCard card = genson.deserialize(carState, OpenCard.class);
-
-        return card;
     }
 }
