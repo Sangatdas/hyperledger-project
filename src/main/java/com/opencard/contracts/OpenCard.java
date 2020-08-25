@@ -3,17 +3,20 @@ package com.opencard.contracts;
 import com.owlike.genson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
+import lombok.ToString;
 import org.hyperledger.fabric.contract.annotation.DataType;
 import org.hyperledger.fabric.contract.annotation.Property;
 
 import java.util.Date;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
-@EqualsAndHashCode
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString
 @DataType()
 public final class OpenCard {
-    @Property()
+    @Property() @EqualsAndHashCode.Include
     private final String cardNumber;
 
     @Property()
@@ -50,19 +53,26 @@ public final class OpenCard {
         this.primaryAccount = primaryAccount;
     }
 
-    @Override
-    public String toString() {
-        return this.getClass().getSimpleName()
-                + "@"
-                + Integer.toHexString(hashCode())
-                + "["
-                + "cardNumber='" + cardNumber + '\''
-                + ", cardCVV=" + cardCVV
-                + ", validFrom=" + validFrom
-                + ", validTo=" + validTo
-                + ", cardOwner='" + cardOwner + '\''
-                + ", linkedAccounts=" + linkedAccounts
-                + ", primaryAccount=" + primaryAccount
-                + ']';
+    public Account linkAccount(final Account newAccount) throws IllegalArgumentException {
+        if (this.linkedAccounts.contains(newAccount)) {
+            throw new IllegalArgumentException("Account has already been linked");
+        }
+        this.linkedAccounts.add(newAccount);
+        return newAccount;
+    }
+
+    public void unlinkAccount(final String accountNumber) {
+        this.linkedAccounts = this.linkedAccounts
+                .stream()
+                .filter(account -> (account.getBranchCode().concat(account.getAccountNumber()).equals(accountNumber)))
+                .collect(Collectors.toList());
+    }
+
+    public void setPrimaryAccount(final String accountNumber) {
+        this.linkedAccounts.forEach(account -> {
+            if (account.getBranchCode().concat(account.getAccountNumber()).equals(accountNumber)) {
+                this.primaryAccount = account;
+            }
+        });
     }
 }

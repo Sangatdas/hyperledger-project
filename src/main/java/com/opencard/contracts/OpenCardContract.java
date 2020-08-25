@@ -15,6 +15,8 @@ import org.hyperledger.fabric.shim.ChaincodeStub;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.LinkedList;
+import java.util.List;
 
 @Contract(
         name = "OpenCard",
@@ -28,7 +30,7 @@ import java.util.Date;
                 contact = @Contact(
                         email = "sangatdas5@gmail.com",
                         name = "OpenCard",
-                        url = ""))
+                        url = "https://github.com/Sangatdas/hyperledger-project"))
 )
 @Default
 public final class OpenCardContract implements ContractInterface {
@@ -45,22 +47,22 @@ public final class OpenCardContract implements ContractInterface {
         String cardState = stub.getStringState(cardNumber);
         if (!cardState.isEmpty()) {
             String errorMessage = String.format("Card %s already exists.", cardNumber);
-            System.out.println(errorMessage);
             throw new ChaincodeException(errorMessage);
         }
         try {
+            List<Account> linkedAccounts = new LinkedList<>();
+            Account primaryAccount = null;
             Date validF = new SimpleDateFormat("dd-MM-yyyy").parse(validFrom);
             Date validT = new SimpleDateFormat("dd-MM-yyyy").parse(validTo);
-            OpenCard card = new OpenCard(cardNumber, cardCVV, validF, validT, cardOwner, null, null);
+            OpenCard card = new OpenCard(cardNumber, cardCVV, validF,
+                    validT, cardOwner, linkedAccounts, primaryAccount);
             cardState = genson.serialize(card);
             stub.putStringState(cardNumber, cardState);
             return card;
         } catch (ParseException pe) {
-            String errorMessage = String.format("Invalid date.");
-            System.out.println(errorMessage);
+            String errorMessage = "Invalid date.";
             throw new ChaincodeException(errorMessage);
         } catch (Exception e) {
-            System.out.println(e.getMessage());
             throw new ChaincodeException((e.getMessage()));
         }
     }
@@ -73,14 +75,89 @@ public final class OpenCardContract implements ContractInterface {
 
             if (cardState.isEmpty()) {
                 String errorMessage = String.format("Card %s does not exist", cardNumber);
-                System.out.println(errorMessage);
+                throw new ChaincodeException(errorMessage);
+            }
+            return genson.deserialize(cardState, OpenCard.class);
+        } catch (Exception e) {
+            throw new ChaincodeException(e.getMessage());
+        }
+    }
+
+    @Transaction(intent = Transaction.TYPE.SUBMIT)
+    public Account linkAccount(final Context ctx, final String cardNumber, final int cvv,
+                               final String branchCode, final String accountNumber,
+                               final String accountOwner, final Double accountBalance) {
+        try {
+            ChaincodeStub stub = ctx.getStub();
+            String cardState = stub.getStringState(cardNumber);
+            if (cardState.isEmpty()) {
+                String errorMessage = String.format("Card %s does not exist", cardNumber);
                 throw new ChaincodeException(errorMessage);
             }
             OpenCard card = genson.deserialize(cardState, OpenCard.class);
-            return card;
+            if (card.getCardCVV() != cvv) {
+                String errorMessage = String.format("Invalid CVV provided for card %s", cardNumber);
+                throw new ChaincodeException(errorMessage);
+            }
+            Account newAccount = new Account(branchCode, accountNumber, accountOwner, accountBalance);
+            card.linkAccount(newAccount);
+            String updatedOpenCardState = genson.serialize(card);
+            stub.putStringState(cardNumber, updatedOpenCardState);
+            return newAccount;
+
         } catch (Exception e) {
-            System.out.println(e.getMessage());
-            return null;
+            throw new ChaincodeException(e.getMessage());
+        }
+    }
+
+    @Transaction(intent = Transaction.TYPE.SUBMIT)
+    public String unlinkAccount(final Context ctx, final String cardNumber,
+                                final int cvv, final String branchCode,
+                                final String accountNumber) {
+        try {
+            ChaincodeStub stub = ctx.getStub();
+            String cardState = stub.getStringState(cardNumber);
+            if (cardState.isEmpty()) {
+                String errorMessage = String.format("Card %s does not exist", cardNumber);
+                throw new ChaincodeException(errorMessage);
+            }
+            OpenCard card = genson.deserialize(cardState, OpenCard.class);
+            if (card.getCardCVV() != cvv) {
+                String errorMessage = String.format("Invalid CVV provided for card %s", cardNumber);
+                throw new ChaincodeException(errorMessage);
+            }
+            card.unlinkAccount(branchCode.concat(accountNumber));
+            String updatedOpenCardState = genson.serialize(card);
+            stub.putStringState(cardNumber, updatedOpenCardState);
+            return String.format("Unlinked account %s from OpenCard", branchCode.concat(accountNumber));
+
+        } catch (Exception e) {
+            throw new ChaincodeException(e.getMessage());
+        }
+    }
+
+    @Transaction(intent = Transaction.TYPE.SUBMIT)
+    public String setPrimaryAccountForCard(final Context ctx, final String cardNumber,
+                                           final int cvv, final String branchCode,
+                                           final String accountNumber) {
+        try {
+            ChaincodeStub stub = ctx.getStub();
+            String cardState = stub.getStringState(cardNumber);
+            if (cardState.isEmpty()) {
+                String errorMessage = String.format("Card %s does not exist", cardNumber);
+                throw new ChaincodeException(errorMessage);
+            }
+            OpenCard card = genson.deserialize(cardState, OpenCard.class);
+            if (card.getCardCVV() != cvv) {
+                String errorMessage = String.format("Invalid CVV provided for card %s", cardNumber);
+                throw new ChaincodeException(errorMessage);
+            }
+            card.setPrimaryAccount(branchCode.concat(accountNumber));
+            String updatedOpenCardState = genson.serialize(card);
+            stub.putStringState(cardNumber, updatedOpenCardState);
+            return String.format("Account %s set as primary account", branchCode.concat(accountNumber));
+        } catch (Exception e) {
+            throw new ChaincodeException(e.getMessage());
         }
     }
 }

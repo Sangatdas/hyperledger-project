@@ -22,8 +22,10 @@ public class Account {
     @Property() @Setter
     private Double accountBalance;
 
-    public Account(@JsonProperty final String branchCode, @JsonProperty final String accountNumber,
-                   @JsonProperty final String accountOwner, @JsonProperty final Double accountBalance) {
+    public Account(@JsonProperty("branchCode") final String branchCode,
+                   @JsonProperty("accountNumber") final String accountNumber,
+                   @JsonProperty("accountOwner") final String accountOwner,
+                   @JsonProperty("accountBalance") final Double accountBalance) {
         this.branchCode = branchCode;
         this.accountNumber = accountNumber;
         this.accountOwner = accountOwner;
