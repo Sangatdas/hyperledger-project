@@ -61,10 +61,14 @@ public final class OpenCard {
         return newAccount;
     }
 
-    public void unlinkAccount(final String accountNumber) {
+    public void unlinkAccount(final String accountNumber) throws IllegalArgumentException {
+        if (this.linkedAccounts.stream().noneMatch(account ->
+                account.getBranchCode().concat(account.getAccountNumber()).equals(accountNumber))) {
+            throw new IllegalArgumentException("Account has not been linked");
+        }
         this.linkedAccounts = this.linkedAccounts
                 .stream()
-                .filter(account -> (account.getBranchCode().concat(account.getAccountNumber()).equals(accountNumber)))
+                .filter(account -> (!account.getBranchCode().concat(account.getAccountNumber()).equals(accountNumber)))
                 .collect(Collectors.toList());
     }
 

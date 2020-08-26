@@ -127,6 +127,7 @@ public final class OpenCardContract implements ContractInterface {
                 throw new ChaincodeException(errorMessage);
             }
             card.unlinkAccount(branchCode.concat(accountNumber));
+            System.out.println(card.toString());
             String updatedOpenCardState = genson.serialize(card);
             stub.putStringState(cardNumber, updatedOpenCardState);
             return String.format("Unlinked account %s from OpenCard", branchCode.concat(accountNumber));
@@ -154,6 +155,7 @@ public final class OpenCardContract implements ContractInterface {
             }
             card.setPrimaryAccount(branchCode.concat(accountNumber));
             String updatedOpenCardState = genson.serialize(card);
+            System.out.println(updatedOpenCardState);
             stub.putStringState(cardNumber, updatedOpenCardState);
             return String.format("Account %s set as primary account", branchCode.concat(accountNumber));
         } catch (Exception e) {

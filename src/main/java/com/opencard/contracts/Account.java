@@ -11,13 +11,13 @@ import org.hyperledger.fabric.contract.annotation.Property;
 public class Account {
 
     @Property()
-    private String branchCode;
+    private final String branchCode;
 
     @Property()
-    private String accountNumber;
+    private final String accountNumber;
 
     @Property()
-    private String accountOwner;
+    private final String accountOwner;
 
     @Property() @Setter
     private Double accountBalance;
