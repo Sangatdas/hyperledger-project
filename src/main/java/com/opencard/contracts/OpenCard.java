@@ -74,8 +74,7 @@ public final class OpenCard {
     public void setPrimaryAccount(final String accountNumber) {
         this.linkedAccounts.forEach(account -> {
             if (account.getBranchCode().concat(account.getAccountNumber()).equals(accountNumber)) {
-                this.primaryAccount = new Account(account.getBranchCode(), account.getAccountNumber(),
-                        account.getAccountOwner(), account.getAccountBalance());
+                this.primaryAccount = account;
             }
         });
     }
