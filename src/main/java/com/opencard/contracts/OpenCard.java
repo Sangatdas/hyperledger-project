@@ -1,6 +1,5 @@
 package com.opencard.contracts;
 
-import com.owlike.genson.annotation.JsonProperty;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.ToString;
@@ -37,13 +36,13 @@ public final class OpenCard {
     @Property()
     private Account primaryAccount;
 
-    public OpenCard(@JsonProperty("cardNumber") final String cardNumber,
-                    @JsonProperty("cardCVV") final int cardCVV,
-                    @JsonProperty("validFrom") final Date validFrom,
-                    @JsonProperty("validTo") final Date validTo,
-                    @JsonProperty("cardOwner") final String cardOwner,
-                    @JsonProperty("linkedAccounts") final List<Account> linkedAccounts,
-                    @JsonProperty("primaryAccount") final Account primaryAccount) {
+    public OpenCard(final String cardNumber,
+                    final int cardCVV,
+                    final Date validFrom,
+                    final Date validTo,
+                    final String cardOwner,
+                    final List<Account> linkedAccounts,
+                    final Account primaryAccount) {
         this.cardNumber = cardNumber;
         this.cardCVV = cardCVV;
         this.validFrom = validFrom;
@@ -75,7 +74,8 @@ public final class OpenCard {
     public void setPrimaryAccount(final String accountNumber) {
         this.linkedAccounts.forEach(account -> {
             if (account.getBranchCode().concat(account.getAccountNumber()).equals(accountNumber)) {
-                this.primaryAccount = account;
+                this.primaryAccount = new Account(account.getBranchCode(), account.getAccountNumber(),
+                        account.getAccountOwner(), account.getAccountBalance());
             }
         });
     }

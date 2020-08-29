@@ -1,34 +1,44 @@
 package com.opencard.contracts;
 
-import com.owlike.genson.annotation.JsonProperty;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.Setter;
+import lombok.ToString;
 import org.hyperledger.fabric.contract.annotation.DataType;
 import org.hyperledger.fabric.contract.annotation.Property;
 
 @Getter
-@DataType
-public class Account {
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@ToString
+@DataType()
+public final class Account {
 
-    @Property()
+    @Property() @EqualsAndHashCode.Include
     private final String branchCode;
 
-    @Property()
+    @Property() @EqualsAndHashCode.Include
     private final String accountNumber;
 
     @Property()
     private final String accountOwner;
 
-    @Property() @Setter
+    @Property()
     private Double accountBalance;
 
-    public Account(@JsonProperty("branchCode") final String branchCode,
-                   @JsonProperty("accountNumber") final String accountNumber,
-                   @JsonProperty("accountOwner") final String accountOwner,
-                   @JsonProperty("accountBalance") final Double accountBalance) {
+    public Account(final String branchCode,
+                   final String accountNumber,
+                   final String accountOwner,
+                   final Double accountBalance) {
         this.branchCode = branchCode;
         this.accountNumber = accountNumber;
         this.accountOwner = accountOwner;
         this.accountBalance = accountBalance;
+    }
+
+    public void deposit(final Double amount) {
+        this.accountBalance += amount;
+    }
+
+    public void withdraw(final Double amount) {
+        this.accountBalance -= amount;
     }
 }

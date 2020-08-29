@@ -1,6 +1,6 @@
 package com.opencard.contracts;
 
-import com.owlike.genson.Genson;
+import com.google.gson.Gson;
 import org.hyperledger.fabric.contract.Context;
 import org.hyperledger.fabric.contract.ContractInterface;
 import org.hyperledger.fabric.contract.annotation.Contact;
@@ -35,7 +35,7 @@ import java.util.List;
 @Default
 public final class OpenCardContract implements ContractInterface {
 
-    private final Genson genson = new Genson();
+    private final Gson gson = new Gson();
 
     @Transaction(intent = Transaction.TYPE.SUBMIT)
     public OpenCard createOpenCard(final Context ctx, final String cardNumber,
@@ -51,12 +51,11 @@ public final class OpenCardContract implements ContractInterface {
         }
         try {
             List<Account> linkedAccounts = new LinkedList<>();
-            Account primaryAccount = null;
             Date validF = new SimpleDateFormat("dd-MM-yyyy").parse(validFrom);
             Date validT = new SimpleDateFormat("dd-MM-yyyy").parse(validTo);
             OpenCard card = new OpenCard(cardNumber, cardCVV, validF,
-                    validT, cardOwner, linkedAccounts, primaryAccount);
-            cardState = genson.serialize(card);
+                    validT, cardOwner, linkedAccounts, null);
+            cardState = gson.toJson(card);
             stub.putStringState(cardNumber, cardState);
             return card;
         } catch (ParseException pe) {
@@ -77,7 +76,7 @@ public final class OpenCardContract implements ContractInterface {
                 String errorMessage = String.format("Card %s does not exist", cardNumber);
                 throw new ChaincodeException(errorMessage);
             }
-            return genson.deserialize(cardState, OpenCard.class);
+            return gson.fromJson(cardState, OpenCard.class);
         } catch (Exception e) {
             throw new ChaincodeException(e.getMessage());
         }
@@ -94,14 +93,14 @@ public final class OpenCardContract implements ContractInterface {
                 String errorMessage = String.format("Card %s does not exist", cardNumber);
                 throw new ChaincodeException(errorMessage);
             }
-            OpenCard card = genson.deserialize(cardState, OpenCard.class);
+            OpenCard card = gson.fromJson(cardState, OpenCard.class);
             if (card.getCardCVV() != cvv) {
                 String errorMessage = String.format("Invalid CVV provided for card %s", cardNumber);
                 throw new ChaincodeException(errorMessage);
             }
             Account newAccount = new Account(branchCode, accountNumber, accountOwner, accountBalance);
             card.linkAccount(newAccount);
-            String updatedOpenCardState = genson.serialize(card);
+            String updatedOpenCardState = gson.toJson(card);
             stub.putStringState(cardNumber, updatedOpenCardState);
             return newAccount;
 
@@ -121,14 +120,14 @@ public final class OpenCardContract implements ContractInterface {
                 String errorMessage = String.format("Card %s does not exist", cardNumber);
                 throw new ChaincodeException(errorMessage);
             }
-            OpenCard card = genson.deserialize(cardState, OpenCard.class);
+            OpenCard card = gson.fromJson(cardState, OpenCard.class);
             if (card.getCardCVV() != cvv) {
                 String errorMessage = String.format("Invalid CVV provided for card %s", cardNumber);
                 throw new ChaincodeException(errorMessage);
             }
             card.unlinkAccount(branchCode.concat(accountNumber));
             System.out.println(card.toString());
-            String updatedOpenCardState = genson.serialize(card);
+            String updatedOpenCardState = gson.toJson(card);
             stub.putStringState(cardNumber, updatedOpenCardState);
             return String.format("Unlinked account %s from OpenCard", branchCode.concat(accountNumber));
 
@@ -148,13 +147,13 @@ public final class OpenCardContract implements ContractInterface {
                 String errorMessage = String.format("Card %s does not exist", cardNumber);
                 throw new ChaincodeException(errorMessage);
             }
-            OpenCard card = genson.deserialize(cardState, OpenCard.class);
+            OpenCard card = gson.fromJson(cardState, OpenCard.class);
             if (card.getCardCVV() != cvv) {
                 String errorMessage = String.format("Invalid CVV provided for card %s", cardNumber);
                 throw new ChaincodeException(errorMessage);
             }
             card.setPrimaryAccount(branchCode.concat(accountNumber));
-            String updatedOpenCardState = genson.serialize(card);
+            String updatedOpenCardState = gson.toJson(card);
             System.out.println(updatedOpenCardState);
             stub.putStringState(cardNumber, updatedOpenCardState);
             return String.format("Account %s set as primary account", branchCode.concat(accountNumber));

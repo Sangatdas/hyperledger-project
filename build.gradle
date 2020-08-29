@@ -15,7 +15,7 @@ dependencies {
     compileOnly 'org.hyperledger.fabric-chaincode-java:fabric-chaincode-shim:2.+'
     compileOnly 'org.projectlombok:lombok:1.18.12'
     annotationProcessor 'org.projectlombok:lombok:1.18.12'
-    implementation 'com.owlike:genson:1.5'
+    implementation 'com.google.code.gson:gson:+'
     testCompileOnly 'org.projectlombok:lombok:1.18.12'
     testAnnotationProcessor 'org.projectlombok:lombok:1.18.12'
     testImplementation 'org.hyperledger.fabric-chaincode-java:fabric-chaincode-shim:2.+'
